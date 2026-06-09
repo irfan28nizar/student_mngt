@@ -1,10 +1,13 @@
 import sqlite3
 from models.student import Student
-
+from models.course import Course
+from models.admin import Admin
 db_name="student_management.db"
 
 def get_db_connection():
-    return sqlite3.connect(db_name)
+    conn=sqlite3.connect(db_name)
+    return conn.cursor()
+#TABLES
 
 def create_tables():
     conn=get_db_connection()
@@ -22,10 +25,12 @@ def create_tables():
     cursor.execute("""create table if not exists admin(
                     id integer primary key autoincrement ,
                     username text not null ,
-                    password text not null)""")
+                    password_hash text not null)""")
 
     conn.commit()
     conn.close()
+
+#STUDENT CRUD OPERATIONS
 
 def create_student(name,department,semester):
     conn=get_db_connection()
@@ -129,3 +134,53 @@ def update_student_semester_db(semester,student_id):
     conn.close()
     return False
 
+#COURSE CRUD OPERATIONS
+
+
+def create_course(course_name,credits):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""insert into courses(course_name,credits)values(?,?)""",(course_name,credits))
+    conn.commit()
+    course_id=cursor.lastrowid
+    course=Course(course_id,course_name,credits)
+    conn.close()
+
+    return course
+
+def view_all_courses():
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from courses""")
+    rows=cursor.fetchall()
+    conn.close()
+    courses=[Course(*row) for row in rows]
+    return courses
+
+def remove_course(course_id):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""delete from courses where id=?""",(course_id,))
+    conn.commit()
+    affected_rows=cursor.rowcount
+    conn.close()
+    return affected_rows>0
+
+#ADMIN CRUD OPERATIONS
+
+def create_admin(username,password):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute(""""insert into admin (username,password_hash) values(?,?) """,(username,password))
+    conn.commit()
+    admin_id=cursor.lastrowid
+    conn.close()
+    return admin_id
+
+def get_admin_by_username(username):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from admin where username=?""",(username,))
+    row=cursor.fetchone()
+    conn.close()
+    return Admin(*row) if row else None
