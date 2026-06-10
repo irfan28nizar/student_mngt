@@ -1,7 +1,7 @@
 from database import (create_admin,
                       get_admin_by_username)
 import bcrypt
-from services import exceptions
+import exceptions
 
 def hash_password(password):
     hashed_pw=bcrypt.hashpw(password.encode(),bcrypt.gensalt())

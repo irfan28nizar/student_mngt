@@ -1,6 +1,8 @@
-def ValidationError(Exception):
+class ValidationError(Exception):
     pass
-def AuthenticationError(Exception):
+
+class AuthenticationError(Exception):
     pass
-def ResourceNotFoundError(Exception):
+
+class ResourceNotFoundError(Exception):
     pass

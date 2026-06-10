@@ -47,13 +47,16 @@ def get_student_by_id(student_id):
         raise exceptions.ResourceNotFoundError("Student not found.")
     return x
 
-def update_student(student_id,semester):
+def update_student(semester,student_id):
     if semester < 1 or semester > 8:
         raise exceptions.ValidationError("Semester must be between 1 and 8.")
-    x=update_student_semester_db(semester,student_id)
-    if not x:
-        raise exceptions.ResourceNotFoundError("Student not found.")
+    temp=get_student_by_id(student_id)
+    if temp:
+        x=update_student_semester_db(semester,student_id)
     return x
 
 def remove_student(student_id):
-    return delete_student(student_id)
+    x=delete_student(student_id)
+    if not x:
+        raise exceptions.ResourceNotFoundError("Student not found.")
+    return x

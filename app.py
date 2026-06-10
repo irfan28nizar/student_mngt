@@ -1,10 +1,12 @@
 from flask import Flask, jsonify , request
+from database import create_tables
 from services.admin_services import (register_admin,
                                       login_admin)
 from validators import checkpass
-from services.student_service import update_student_semester, get_student_by_id,get_all_students,add_student
+from services.student_service import update_student, get_student_by_id,get_all_students,add_student
 import exceptions
 app=Flask(__name__)
+create_tables()  
 @app.route("/")
 def home():
     return{"message":"Backend Working"}
@@ -45,9 +47,9 @@ def create_student():
         return {"error":"Name is required"},400
     if not data["department"].strip():
         return {"error":"Department is required"},400
-    if not data["semester"].strip():
-        return {"error":"Semester is required"},400
-    add_student(data["name"],data["department"],data["semester"])
+    if not isinstance(data["semester"],int):
+        return {"error":"Semester must be an integer"},400
+    add_student(data["name"],data["department"],int(data["semester"]))
     return {"message":"Student Created"},201
 
 @app.route("/students/<int:student_id>",methods=["GET"])
@@ -60,8 +62,6 @@ def get_student(student_id):
             "department":student.department,
             "semester":student.semester
         }),200
-    else:
-        return {"error":"Student not found"},404
 
 @app.route("/students/<int:student_id>",methods=["PATCH"])
 def update_student_by_semester(student_id):
@@ -71,7 +71,7 @@ def update_student_by_semester(student_id):
     if not isinstance(data["semester"],int):
         return {"error":"Semester must be an integer"},400
     
-    if update_student_semester(data["semester"],student_id):
+    if update_student(data["semester"],student_id):
         return {"message":"Student semester updated"},200
     else:
         return {"error":"Failed to update student semester"},404
@@ -82,7 +82,7 @@ def update_student_by_semester(student_id):
 def register():
     data=request.get_json()
     if not data["username"].strip():
-        return{"eroor":"Username is required"},400
+        return{"error":"Username is required"},400
     if not data["password"].strip():
         return{"error":"Password is required"},400
     if not checkpass(data["password"]):
@@ -94,7 +94,7 @@ def register():
 def login():
     data=request.get_json()
     if not data["username"].strip():
-        return{"eroor":"Username is required"},400
+        return{"error":"Username is required"},400
     if not data["password"].strip():
         return{"error":"Password is required"},400
     if login_admin(data["username"],data["password"]):

@@ -2,11 +2,12 @@ import sqlite3
 from models.student import Student
 from models.course import Course
 from models.admin import Admin
-db_name="student_management.db"
+db_name="database.db"
 
 def get_db_connection():
     conn=sqlite3.connect(db_name)
-    return conn.cursor()
+    return conn
+
 #TABLES
 
 def create_tables():
@@ -125,12 +126,10 @@ def update_student_semester_db(semester,student_id):
     cursor=conn.cursor()
     cursor.execute("""Update students set semester=? where id=?""",(semester,student_id))
     conn.commit()
-    row=cursor.fetchone()
-    if row:
-        return True
+    row=cursor.rowcount
     cursor.close()
     conn.close()
-    return False
+    return row >0
 
 #COURSE CRUD OPERATIONS
 
@@ -169,7 +168,7 @@ def remove_course(course_id):
 def create_admin(username,password):
     conn=get_db_connection()
     cursor=conn.cursor()
-    cursor.execute(""""insert into admin (username,password_hash) values(?,?) """,(username,password))
+    cursor.execute("""insert into admin (username,password_hash) values(?,?) """,(username,password))
     conn.commit()
     admin_id=cursor.lastrowid
     conn.close()
