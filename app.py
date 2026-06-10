@@ -100,9 +100,53 @@ def login():
     if login_admin(data["username"],data["password"]):
         return{"message":"Login Successful"},200
 
+from services.notice_services import(add_notice,
+                                     view_all_notice,
+                                     view_notice_by_id,
+                                     remove_notice
+                                     )
+#Notice 
+from validators import lengthcheck
+@app.route("/notices",methods=["POST"])
+def add():
+    data=request.get_json()
+    if not data["title"].strip():
+        return{"error":"Title cannot be empty."},400
+    if not data["content"].strip():
+        return{"error":"Content cannot be empty."},400
+    if not lengthcheck(data["content"]):
+        return{"error":"Content length must be 25 characters."}
+    if add_notice(data["title"],data["content"]):
+        return {"message":"Notice created"},201
+    
+@app.route("/notices",methods=["GET"])
+def view_all():
+    notices=view_all_notice()
+    return jsonify([
+        {
+            "id":notice.id,
+            "title":notice.title,
+            "content":notice.content,
+            "created_at":notice.created_at
+        }
+    for notice in notices
+    ])
 
+@app.route("/notices/<int:id>",methods=["GET"])
+def get_ntc(id):
+    notice=view_notice_by_id(id)
+    if notice:
+        return jsonify({
+            "id":notice.id,
+            "title":notice.title,
+            "content":notice.content,
+            "created_at":notice.created_at
+        }),200
 
-
+@app.route("/notices/<int:notice_id>",methods=["DELETE"])
+def delnoti(notice_id):
+    if remove_notice(notice_id):
+        return {"message":"Notice deleted."},200
 
 if __name__ == "__main__":
     app.run(debug=True)

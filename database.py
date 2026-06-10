@@ -2,6 +2,7 @@ import sqlite3
 from models.student import Student
 from models.course import Course
 from models.admin import Admin
+from models.notices import Notice
 db_name="database.db"
 
 def get_db_connection():
@@ -27,7 +28,10 @@ def create_tables():
                     id integer primary key autoincrement ,
                     username text not null ,
                     password_hash text not null)""")
-
+    cursor.execute("""create table if not exists notices(id integer primary key autoincrement,
+                   title text not null ,
+                   content text not null , 
+                   created_at text not null)""")
     conn.commit()
     conn.close()
 
@@ -181,3 +185,46 @@ def get_admin_by_username(username):
     row=cursor.fetchone()
     conn.close()
     return Admin(*row) if row else None
+
+#NOTICE CRUD OPERATIONS
+def create_notice(title,content,created_at):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""insert into notices(title,content,created_at)values(?,?,?)""",(title,content,created_at))
+    conn.commit()
+    row=cursor.rowcount
+    cursor.close()
+    conn.close()
+    return row > 0
+
+def get_all_notices():
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from notices""")
+    notices=cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return [Notice(*notice)for notice in notices]
+
+def get_notice_by_id(id):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from notices where id=?""",(id,))
+    row=cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return Notice(*row) if row else None
+
+def delete_notice(id):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""delete from notices where id=?""",(id,))
+    conn.commit()
+    row=cursor.rowcount
+    cursor.close()
+    conn.close()
+    return row>0
+    
+
+  
+    
