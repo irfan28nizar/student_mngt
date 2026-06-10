@@ -10,4 +10,3 @@ def checkpass(password):
     if not any(char in "!@#$%^&*()-_=+[]{}|;:,.<>?/" for char in password):
         return False
     return True
-

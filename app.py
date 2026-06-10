@@ -1,12 +1,29 @@
 from flask import Flask, jsonify , request
-from services.admin_service import(register_admin,
-                                   login_admin)
-from services.validators import checkpass
+from services.admin_services import (register_admin,
+                                      login_admin)
+from validators import checkpass
 from services.student_service import update_student_semester, get_student_by_id,get_all_students,add_student
+import exceptions
 app=Flask(__name__)
 @app.route("/")
 def home():
     return{"message":"Backend Working"}
+
+#Global Error Handler
+@app.errorhandler(exceptions.ValidationError)
+def handle_validation_error(error):
+    return {"error":str(error)},400
+
+@app.errorhandler(exceptions.AuthenticationError)
+def handle_authentication_error(error):
+    return{"error":str(error)},401
+
+@app.errorhandler(exceptions.ResourceNotFoundError)
+def handle_resource_not_found_error(error):
+    return {"error":str(error)},404
+
+
+#STUDENT ROUTES
 
 @app.route("/students",methods=["GET"])
 def view_students():
@@ -59,6 +76,7 @@ def update_student_by_semester(student_id):
     else:
         return {"error":"Failed to update student semester"},404
     
+#ADMIN ROUTES
 
 @app.route("/register",methods=["POST"])
 def register():
@@ -69,11 +87,8 @@ def register():
         return{"error":"Password is required"},400
     if not checkpass(data["password"]):
         return{"error":"Password must be at least 8 characters long, contain a number, an uppercase letter, a lowercase letter, and a special character"},400
-    try:
-        admin=register_admin(data["username"],data["password"])
-        return {"message":"Admin registered successfully"},201
-    except ValueError as e:
-        return {"error":str(e)},401
+    admin=register_admin(data["username"],data["password"])
+    return {"message":"Admin registered successfully"},201
 
 @app.route("/login",methods=["POST"])
 def login():
@@ -82,11 +97,9 @@ def login():
         return{"eroor":"Username is required"},400
     if not data["password"].strip():
         return{"error":"Password is required"},400
-    try:
-        if login_admin(data["username"],data["password"]):
-            return{"message":"Login Successful"},200
-    except ValueError as e:
-        return {"error":str(e)},400
+    if login_admin(data["username"],data["password"]):
+        return{"message":"Login Successful"},200
+
 
 
 

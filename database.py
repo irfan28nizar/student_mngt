@@ -123,8 +123,6 @@ def view_student_by_id(student_id):
 def update_student_semester_db(semester,student_id):
     conn=get_db_connection()
     cursor=conn.cursor()
-    if semester < 1 or semester > 8:
-        raise ValueError("Semester must be between 1 and 8.")
     cursor.execute("""Update students set semester=? where id=?""",(semester,student_id))
     conn.commit()
     row=cursor.fetchone()
