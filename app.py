@@ -28,7 +28,7 @@ def handle_resource_not_found_error(error):
 #STUDENT ROUTES
 
 @app.route("/students",methods=["GET"])
-def view_students():
+def api_view_students():
     students=get_all_students()
     return jsonify([
         {
@@ -41,7 +41,7 @@ def view_students():
     ])
 
 @app.route("/students",methods=["POST"])
-def create_student():
+def api_create_student():
     data=request.get_json()
     if not data["name"].strip():
         return {"error":"Name is required"},400
@@ -53,7 +53,7 @@ def create_student():
     return {"message":"Student Created"},201
 
 @app.route("/students/<int:student_id>",methods=["GET"])
-def get_student(student_id):
+def api_get_student(student_id):
     student=get_student_by_id(student_id)
     if student:
         return jsonify({
@@ -64,7 +64,7 @@ def get_student(student_id):
         }),200
 
 @app.route("/students/<int:student_id>",methods=["PATCH"])
-def update_student_by_semester(student_id):
+def api_update_student_by_semester(student_id):
     data=request.get_json()
     if "semester" not in data:
         return {"error":"Semester is required"},400
@@ -76,22 +76,69 @@ def update_student_by_semester(student_id):
     else:
         return {"error":"Failed to update student semester"},404
     
+#COURSE ROUTE
+from services.course_service import(add_course,
+                                    get_all_courses,
+                                    get_course_by_id,
+                                    remove_course)
+@app.route("/course",methods=["POST"])
+def api_new_course():
+    data=request.get_json()
+    if not data["course_name"]:
+        return {"error":"Course name is required."},400
+    if not isinstance(data["credits"],int):
+        return {"error":"Credits must be integer"},400
+    x=add_course(data["course_name"],data["credits"])
+    if x:
+        return {"message":f"Course created with id {x}."},201
+
+@app.route("/course",methods=["GET"])
+def api_view_all_cou():
+    courses=get_all_courses()
+    if courses:
+        return jsonify([{
+            "id":course.course_id,
+            "course_name":course.course_name,
+            "credits":course.credits
+        }
+        for course in courses])
+    
+@app.route("/course/<int:id>",methods=["GET"])
+def api_get_cou_id(id):
+    course=get_course_by_id(id)
+    if course:
+        return jsonify({
+            "id":course.course_id,
+            "course_name":course.course_name,
+            "credits":course.credits
+        }),200    
+    
+@app.route("/course/<int:id>",methods=["DELETE"])
+def api_del_cou_id(id):
+    course=remove_course(id)
+    if course:
+        return {"message":f"Course id={id} deleted."},200
+    
+    
 #ADMIN ROUTES
 
 @app.route("/register",methods=["POST"])
-def register():
+def api_register():
     data=request.get_json()
     if not data["username"].strip():
         return{"error":"Username is required"},400
     if not data["password"].strip():
         return{"error":"Password is required"},400
     if not checkpass(data["password"]):
-        return{"error":"Password must be at least 8 characters long, contain a number, an uppercase letter, a lowercase letter, and a special character"},400
+        return{"error":"Password must be at least 8 characters long,"
+        " contain a number, an uppercase letter,"
+        " a lowercase letter, and a special character"},400
     admin=register_admin(data["username"],data["password"])
-    return {"message":"Admin registered successfully"},201
+    if admin:
+        return {"message":"Admin registered successfully"},201
 
 @app.route("/login",methods=["POST"])
-def login():
+def api_login():
     data=request.get_json()
     if not data["username"].strip():
         return{"error":"Username is required"},400
@@ -100,28 +147,31 @@ def login():
     if login_admin(data["username"],data["password"]):
         return{"message":"Login Successful"},200
 
+#NOTICES ROUTES
+
 from services.notice_services import(add_notice,
-                                     view_all_notice,
-                                     view_notice_by_id,
+                                     get_all_notice,
+                                     get_notice_by_id,
                                      remove_notice
                                      )
-#Notice 
+
 from validators import lengthcheck
+
 @app.route("/notices",methods=["POST"])
-def add():
+def api_add_notice():
     data=request.get_json()
     if not data["title"].strip():
         return{"error":"Title cannot be empty."},400
     if not data["content"].strip():
         return{"error":"Content cannot be empty."},400
     if not lengthcheck(data["content"]):
-        return{"error":"Content length must be 25 characters."}
+        return{"error":"Content length must be 25 characters."},400
     if add_notice(data["title"],data["content"]):
         return {"message":"Notice created"},201
     
 @app.route("/notices",methods=["GET"])
-def view_all():
-    notices=view_all_notice()
+def api_view_all_notice():
+    notices=get_all_notice()
     return jsonify([
         {
             "id":notice.id,
@@ -133,8 +183,8 @@ def view_all():
     ])
 
 @app.route("/notices/<int:id>",methods=["GET"])
-def get_ntc(id):
-    notice=view_notice_by_id(id)
+def api_get_notice_by_id(id):
+    notice=get_notice_by_id(id)
     if notice:
         return jsonify({
             "id":notice.id,
@@ -144,9 +194,78 @@ def get_ntc(id):
         }),200
 
 @app.route("/notices/<int:notice_id>",methods=["DELETE"])
-def delnoti(notice_id):
+def api_del_notice(notice_id):
     if remove_notice(notice_id):
         return {"message":"Notice deleted."},200
+    
+#TIMETABLE ROUTES
+
+from services.timetable_service import(add_slot,
+                               get_all_slots_ser,
+                               get_slot,
+                               remove_slot,
+                               get_slots_by_day)
+@app.route("/timetable",methods=["POST"])
+def api_new_slot():
+    data=request.get_json()
+    if not isinstance(data["course_id"],int):
+        return {"error":"course_id must be integer"},400
+    if not data["day"]:
+        return {"error":"day required"},400
+    if not data["start_time"]:
+        return {"error":"start_time required"},400
+    if not data["end_time"]:
+        return {"error":"end_time required"},400
+    if not data["room"]:
+        return {"error":"room_id required"},400
+    if add_slot(data["course_id"],data["day"],data["start_time"],data["end_time"],data["room"]):
+        return {"message":"Slot created"},201
+    
+@app.route("/timetable",methods=["GET"])   
+def api_get_all_slot():
+    slots=get_all_slots_ser()
+    if slots:
+        return jsonify([{
+            "id":slot.id,
+            "course_id":slot.course_id,
+            "day":slot.day,
+            "start_time":slot.start_time,
+            "end_time":slot.end_time,
+            "room":slot.room
+        }for slot in slots]),200
+
+@app.route("/timetable/<int:course_id>/slots",methods=["GET"])
+def api_get_slots_by_cou_id(course_id):
+    slots=get_slot(course_id)
+    if slots:
+        return jsonify([{
+            "id":slot.id,
+            "course_id":slot.course_id,
+            "day":slot.day,
+            "start_time":slot.start_time,
+            "end_time":slot.end_time,
+            "room":slot.room            
+        }
+        for slot in slots]),200
+    
+@app.route("/timetable/<int:id>",methods=["DELETE"])
+def api_del_slot(id):
+    dell=remove_slot(id)
+    if dell:
+        return {"message":f"{dell} deleted"},200
+    
+@app.route("/timetable/day/<day>",methods=["GET"])
+def api_get_slots_by_day(day):
+    slots=get_slots_by_day(day)
+    if slots:
+        return jsonify([{
+        "id":slot.id,
+        "course_id":slot.course_id,
+        "day":slot.day,
+        "start_time":slot.start_time,
+        "end_time":slot.end_time,
+        "room":slot.room    
+        }for slot in slots])
 
 if __name__ == "__main__":
     app.run(debug=True)

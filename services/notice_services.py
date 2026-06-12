@@ -1,7 +1,7 @@
 from datetime import datetime
 from database import(create_notice,
-                     get_all_notices,
-                     get_notice_by_id,
+                     view_all_notices,
+                     view_notice_by_id,
                      delete_notice
                      )
 from exceptions import(ValidationError,
@@ -13,14 +13,14 @@ def add_notice(title,content):
         raise ValidationError("Notice not created.")
     return row
 
-def view_all_notice():
-    notices=get_all_notices()
+def get_all_notice():
+    notices=view_all_notices()
     if not notices:
         raise ResourceNotFoundError("No notices found.")
     return notices
     
-def view_notice_by_id(id):
-    notice=get_notice_by_id(id)
+def get_notice_by_id(id):
+    notice=view_notice_by_id(id)
     if not notice:
         raise ResourceNotFoundError("Notice not found.")
     return notice

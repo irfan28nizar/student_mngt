@@ -14,6 +14,7 @@ def get_db_connection():
 def create_tables():
     conn=get_db_connection()
     cursor=conn.cursor()
+    conn.execute("PRAGMA foreign_keys = ON")
 
     cursor.execute("""create table if not exists students(
                    id integer primary key autoincrement ,
@@ -28,10 +29,19 @@ def create_tables():
                     id integer primary key autoincrement ,
                     username text not null ,
                     password_hash text not null)""")
-    cursor.execute("""create table if not exists notices(id integer primary key autoincrement,
+    cursor.execute("""create table if not exists notices(
+                   id integer primary key autoincrement,
                    title text not null ,
                    content text not null , 
                    created_at text not null)""")
+    cursor.execute("""create table if not exists timetable(
+               id integer primary key autoincrement,
+               course_id integer not null,
+               day text not null,
+               start_time text not null,
+               end_time text not null,
+                room text not null,
+               foreign key(course_id) references courses(id)) """)
     conn.commit()
     conn.close()
 
@@ -136,7 +146,7 @@ def update_student_semester_db(semester,student_id):
     return row >0
 
 #COURSE CRUD OPERATIONS
-
+from models.course import Course
 
 def create_course(course_name,credits):
     conn=get_db_connection()
@@ -144,26 +154,48 @@ def create_course(course_name,credits):
     cursor.execute("""insert into courses(course_name,credits)values(?,?)""",(course_name,credits))
     conn.commit()
     course_id=cursor.lastrowid
-    course=Course(course_id,course_name,credits)
+    cursor.close()
     conn.close()
-
-    return course
+    return course_id
 
 def view_all_courses():
     conn=get_db_connection()
     cursor=conn.cursor()
     cursor.execute("""select * from courses""")
     rows=cursor.fetchall()
+    cursor.close()
     conn.close()
-    courses=[Course(*row) for row in rows]
-    return courses
+    if not rows:
+        return []
+    return [Course(*row) for row in rows]
 
-def remove_course(course_id):
+def view_course_by_id(course_id):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from courses where id=?""",(course_id,))
+    conn.commit()
+    rows=cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return Course(*rows) if rows else None
+
+def view_course_by_name(course_name):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from courses where course_name=?""",(course_name,))
+    rows=cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return Course(*rows) if rows else None 
+
+
+def delete_course(course_id):
     conn=get_db_connection()
     cursor=conn.cursor()
     cursor.execute("""delete from courses where id=?""",(course_id,))
     conn.commit()
     affected_rows=cursor.rowcount
+    cursor.close()
     conn.close()
     return affected_rows>0
 
@@ -178,7 +210,7 @@ def create_admin(username,password):
     conn.close()
     return admin_id
 
-def get_admin_by_username(username):
+def view_admin_by_username(username):
     conn=get_db_connection()
     cursor=conn.cursor()
     cursor.execute("""select * from admin where username=?""",(username,))
@@ -197,7 +229,7 @@ def create_notice(title,content,created_at):
     conn.close()
     return row > 0
 
-def get_all_notices():
+def view_all_notices():
     conn=get_db_connection()
     cursor=conn.cursor()
     cursor.execute("""select * from notices""")
@@ -206,7 +238,7 @@ def get_all_notices():
     conn.close()
     return [Notice(*notice)for notice in notices]
 
-def get_notice_by_id(id):
+def view_notice_by_id(id):
     conn=get_db_connection()
     cursor=conn.cursor()
     cursor.execute("""select * from notices where id=?""",(id,))
@@ -225,6 +257,81 @@ def delete_notice(id):
     conn.close()
     return row>0
     
+#timetable 
+from models.timtetable import Timetable
+def create_slot(course_id,day,start_time,end_time,room):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""insert into timetable(course_id,day,start_time,end_time,room)values(?,?,?,?,?)""",(course_id,day,start_time,end_time,room))
+    conn.commit()
+    slot=cursor.lastrowid
+    cursor.close()
+    conn.close()
+    return slot
 
-  
+def view_all_slots():
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("select * from timetable")
+    all_slot=cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    if not all_slot:
+        return []
+    return [Timetable(*slot) for slot in all_slot]
+    
+def view_slot_by_id(id):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from timetable where course_id=?""",(id,))
+    slots=cursor.fetchall()    
+    cursor.close()
+    conn.close()
+    if not slots:
+        return []
+    return [Timetable(*slot) for slot in slots]
+
+def delete_slot(id):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""delete from timetable where id=?""",(id,))
+    count=cursor.rowcount
+    cursor.close()
+    conn.close()
+    if count>0:
+        return count
+    
+def view_slot_details(day,start_time,end_time,room):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from timetable where day=? and start_time=? and end_time=? and room=? """,(day,start_time,end_time,room))
+    row=cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return Timetable(*row) if row else None
+    
+def view_all_slots_day_room(day,room):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from timetable where day=? and room=? """,(day,room))
+    rows=cursor.fetchall()
+    cursor.close()
+    conn.close()
+    if rows:
+        return [Timetable(*row) for row in rows]
+    else:
+        return []
+    
+def view_all_slots_day(day):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from timetable where day=? order by start_time """,(day,))
+    rows=cursor.fetchall()
+    cursor.close()
+    conn.close()
+    if rows:
+        return [Timetable(*row) for row in rows]
+    else:
+        return []
     
