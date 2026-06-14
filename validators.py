@@ -16,3 +16,19 @@ def lengthcheck(content):
         return False
     return True
 
+
+def is_valid_data(data):
+    if not data.strip():
+        return False
+    return True
+
+def is_int(data):
+    if not isinstance(data,int):
+        return False
+    return True
+
+def check_weekdays(day):
+    weekdays=["monday","tuesday","wednesday","friday","thursday"]
+    if day.lower() in weekdays:
+        return False
+    return True 

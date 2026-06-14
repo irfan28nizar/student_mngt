@@ -302,9 +302,10 @@ def create_slot(course_id,day,start_time,end_time,room):
     conn.close()
     return slot
 
-def view_all_slots(course_id,day,room):
+def view_all_slots(course_id,day,room,page,page_size):
     conn=get_db_connection()
     cursor=conn.cursor()
+    offset=(page-1)*page_size
     query=("select * from timetable where 1=1")
     params=[]
     if course_id:
@@ -316,12 +317,14 @@ def view_all_slots(course_id,day,room):
     if room:
         query+=" and room=?"
         params.append(room)
+
+    query+=" limit ? offset ?"
+    params.append(page_size)
+    params.append(offset)
     cursor.execute(query,tuple(params))
     all_slot=cursor.fetchall()
     cursor.close()
     conn.close()
-    if not all_slot:
-        return []
     return [Timetable(*slot) for slot in all_slot]
     
 def view_slot_by_courseid(id):
@@ -378,6 +381,16 @@ def view_all_slots_day(day):
         return [Timetable(*row) for row in rows]
     else:
         return []
+    
+def view_by_slot_id(slot_id):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from timetable where id=?""",(slot_id,))
+    count=cursor.fetchone()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return count
     
 
     
