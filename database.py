@@ -5,12 +5,26 @@ from models.admin import Admin
 from models.notices import Notice
 db_name="database.db"
 
+
+
 def get_db_connection():
     conn=sqlite3.connect(db_name)
     return conn
 
-#TABLES
+#CHANGES AND TESTING
 
+# conn=get_db_connection()
+# cursor=conn.cursor()
+# cursor.execute("""alter table notices add column is_deleted not null default 0 """)
+# conn.commit()
+# cursor.execute("""select * from notices""")
+# row=cursor.fetchall()
+# print(row)
+# cursor.close()
+# conn.close()
+
+
+#TABLES
 def create_tables():
     conn=get_db_connection()
     cursor=conn.cursor()
@@ -43,6 +57,7 @@ def create_tables():
                 room text not null,
                foreign key(course_id) references courses(id)) """)
     conn.commit()
+    cursor.close()
     conn.close()
 
 #STUDENT CRUD OPERATIONS
@@ -54,17 +69,10 @@ def create_student(name,department,semester):
                    values(?,?,?)""",(name,department,semester))
     conn.commit()
     student_id=cursor.lastrowid
+    cursor.close()
     conn.close()
     return Student(student_id,name,department,semester)
 
-def view_all_students():
-    conn=get_db_connection()
-    cursor=conn.cursor()
-    cursor.execute("select id,name,department,semester from students")
-    rows=cursor.fetchall()
-    conn.close()
-    students=[Student(*row) for row in rows]
-    return students
 
 def update_student(student_id,name,department,semester):
     conn=get_db_connection()
@@ -72,6 +80,7 @@ def update_student(student_id,name,department,semester):
     cursor.execute("""update students set name=? , department=? , semester=? where id=?""",(name,department,semester,student_id))
     conn.commit()
     rows_affected=cursor.rowcount
+    cursor.close()
     conn.close()
     return rows_affected > 0
 
@@ -82,31 +91,14 @@ def delete_student(student_id):
                    (student_id,))
     conn.commit()
     row_count=cursor.rowcount
+    cursor.close()
     conn.close()
     return row_count > 0
 
-def view_student_by_department(department):
+def view_students_filtered(department,semester,page,page_size):
     conn=get_db_connection()
     cursor=conn.cursor()
-    cursor.execute("""select * from students where department=?""",(department,))
-    rows=cursor.fetchall()
-    conn.close()
-    students=[Student(*row) for row in rows]
-    return students
-
-def view_students_by_semester(semester):
-    conn=get_db_connection()
-    cursor=conn.cursor()
-    cursor.execute("""select * from students where semester=?""",(semester,))
-    rows=cursor.fetchall()
-    conn.close()
-    students=[Student(*row) for row in rows]
-    return students
-
-
-def view_students_by_department_and_semester(department=None,semester=None):
-    conn=get_db_connection()
-    cursor=conn.cursor()
+    offset=(page-1)*page_size
     query="select * from students where 1=1"
     params=[]
 
@@ -117,12 +109,29 @@ def view_students_by_department_and_semester(department=None,semester=None):
     if semester:
         query+=" and semester=?"
         params.append(semester)
+    query+=" order by name asc limit ? offset ? "
+    params.append(page_size)
+    params.append(offset)
 
     cursor.execute(query,tuple(params))
     rows=cursor.fetchall()
+    cursor.close()
     conn.close()
-    students=[Student(*row) for row in rows]
-    return students
+    if not rows:
+        return[]
+    return [Student(*row) for row in rows]
+
+def view_students_paginated(page,page_size):
+    offset=(page-1)*page_size
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute("""select * from students limit ? offset ?""",(page_size,offset))
+    students=cursor.fetchall()
+    cursor.close()
+    conn.close()
+    if not students:
+        return []
+    return [Student(*row) for row in students]
 
 def view_student_by_id(student_id):
     conn=get_db_connection()
@@ -173,7 +182,6 @@ def view_course_by_id(course_id):
     conn=get_db_connection()
     cursor=conn.cursor()
     cursor.execute("""select * from courses where id=?""",(course_id,))
-    conn.commit()
     rows=cursor.fetchone()
     cursor.close()
     conn.close()
@@ -207,6 +215,7 @@ def create_admin(username,password):
     cursor.execute("""insert into admin (username,password_hash) values(?,?) """,(username,password))
     conn.commit()
     admin_id=cursor.lastrowid
+    cursor.close()
     conn.close()
     return admin_id
 
@@ -215,6 +224,7 @@ def view_admin_by_username(username):
     cursor=conn.cursor()
     cursor.execute("""select * from admin where username=?""",(username,))
     row=cursor.fetchone()
+    cursor.close()
     conn.close()
     return Admin(*row) if row else None
 
@@ -232,7 +242,7 @@ def create_notice(title,content,created_at):
 def view_all_notices():
     conn=get_db_connection()
     cursor=conn.cursor()
-    cursor.execute("""select * from notices""")
+    cursor.execute("""select * from notices where is_deleted=?""",(0,))
     notices=cursor.fetchall()
     cursor.close()
     conn.close()
@@ -241,7 +251,7 @@ def view_all_notices():
 def view_notice_by_id(id):
     conn=get_db_connection()
     cursor=conn.cursor()
-    cursor.execute("""select * from notices where id=?""",(id,))
+    cursor.execute("""select * from notices where id=? and is_deleted=?""",(id,0))
     row=cursor.fetchone()
     cursor.close()
     conn.close()
@@ -250,38 +260,71 @@ def view_notice_by_id(id):
 def delete_notice(id):
     conn=get_db_connection()
     cursor=conn.cursor()
-    cursor.execute("""delete from notices where id=?""",(id,))
+    cursor.execute(""" update notices set is_deleted=? where id=?""",(1,id))
     conn.commit()
     row=cursor.rowcount
     cursor.close()
     conn.close()
     return row>0
+
+def restore_notice(id):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute(""" update notices set is_deleted=? where id=?""",(0,id))
+    conn.commit()
+    row=cursor.rowcount
+    cursor.close()
+    conn.close()
+    return row>0
+
+def check_notice(id):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+    cursor.execute(""" select * from notices where id=?""",(id,))
+    row=cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return Notice(*row) if row else None
     
 #timetable 
 from models.timtetable import Timetable
 def create_slot(course_id,day,start_time,end_time,room):
     conn=get_db_connection()
     cursor=conn.cursor()
-    cursor.execute("""insert into timetable(course_id,day,start_time,end_time,room)values(?,?,?,?,?)""",(course_id,day,start_time,end_time,room))
+    cursor.execute("""insert into timetable(course_id,
+                   day,
+                   start_time,
+                   end_time,
+                   room)values(?,?,?,?,?)""",(course_id,day,start_time,end_time,room))
     conn.commit()
     slot=cursor.lastrowid
     cursor.close()
     conn.close()
     return slot
 
-def view_all_slots():
+def view_all_slots(course_id,day,room):
     conn=get_db_connection()
     cursor=conn.cursor()
-    cursor.execute("select * from timetable")
+    query=("select * from timetable where 1=1")
+    params=[]
+    if course_id:
+        query+=" and course_id=?"
+        params.append(course_id)
+    if day:
+        query+=" and day=?"
+        params.append(day)
+    if room:
+        query+=" and room=?"
+        params.append(room)
+    cursor.execute(query,tuple(params))
     all_slot=cursor.fetchall()
     cursor.close()
     conn.close()
-
     if not all_slot:
         return []
     return [Timetable(*slot) for slot in all_slot]
     
-def view_slot_by_id(id):
+def view_slot_by_courseid(id):
     conn=get_db_connection()
     cursor=conn.cursor()
     cursor.execute("""select * from timetable where course_id=?""",(id,))
@@ -297,6 +340,7 @@ def delete_slot(id):
     cursor=conn.cursor()
     cursor.execute("""delete from timetable where id=?""",(id,))
     count=cursor.rowcount
+    conn.commit()
     cursor.close()
     conn.close()
     if count>0:
@@ -334,4 +378,6 @@ def view_all_slots_day(day):
         return [Timetable(*row) for row in rows]
     else:
         return []
+    
+
     

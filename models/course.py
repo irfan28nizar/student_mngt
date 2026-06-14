@@ -8,3 +8,10 @@ class Course:
         f"Course_id={self.course_id},"
         f"Course_name={self.course_name}, " 
         f"Credits={self.credits})")
+    
+    def course_to_dict(self):
+        return{
+            "id":self.course_id,
+            "course_name":self.course_name,
+            "credits":self.credits
+        }

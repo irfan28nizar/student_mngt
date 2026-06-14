@@ -12,3 +12,11 @@ class Student:
         f"department={self.department}, " 
         f"semester={self.semester})")
     
+    def student_to_dict(self):
+        return {
+            "id": self.student_id,
+            "name": self.name,
+            "department": self.department,
+            "semester": self.semester
+        }
+    

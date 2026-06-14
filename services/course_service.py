@@ -18,8 +18,6 @@ def add_course(course_name,credits):
 
 def get_all_courses():
     courses=view_all_courses()
-    if not courses:
-        raise ResourceNotFoundError("No courses found.")
     return courses
 
 def get_course_by_id(id):

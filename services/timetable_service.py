@@ -1,6 +1,6 @@
 from database import(create_slot,
                      view_all_slots,
-                     view_slot_by_id,
+                     view_slot_by_courseid,
                      view_all_slots_day_room,
                      view_all_slots_day,
                      delete_slot)
@@ -23,14 +23,12 @@ def add_slot(course_id,day,start_time,end_time,room):
         raise ValidationError("Slot unable to create.")
     return slot_id
 
-def get_all_slots_ser():
-    slots=view_all_slots()
-    if not slots:
-        raise ResourceNotFoundError("No slot found.")
+def get_all_slots_ser(course_id,day,room):
+    slots=view_all_slots(course_id,day,room)
     return slots
 
 def get_slot(id):
-    slot=view_slot_by_id(id)
+    slot=view_slot_by_courseid(id)
     if not slot:
         raise ResourceNotFoundError("No slot found.")
     return slot

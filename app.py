@@ -1,9 +1,7 @@
 from flask import Flask, jsonify , request
 from database import create_tables
-from services.admin_services import (register_admin,
-                                      login_admin)
 from validators import checkpass
-from services.student_service import update_student, get_student_by_id,get_all_students,add_student
+
 import exceptions
 app=Flask(__name__)
 create_tables()  
@@ -26,17 +24,20 @@ def handle_resource_not_found_error(error):
 
 
 #STUDENT ROUTES
+from services.student_service import(update_student,
+                                     get_student_by_id,
+                                     get_students_filtered,
+                                     add_student,
+                                     remove_student)
 
 @app.route("/students",methods=["GET"])
 def api_view_students():
-    students=get_all_students()
-    return jsonify([
-        {
-            "id":student.student_id,
-            "name":student.name,
-            "department":student.department,
-            "semester":student.semester
-        }
+    department=request.args.get("department")
+    semester=request.args.get("semester",type=int)
+    page=request.args.get("page",default=1,type=int)
+    page_size=request.args.get("page_size",default=10,type=int)
+    students=get_students_filtered(department,semester,page,page_size)
+    return jsonify([student.student_to_dict()
         for student in students
     ])
 
@@ -56,12 +57,7 @@ def api_create_student():
 def api_get_student(student_id):
     student=get_student_by_id(student_id)
     if student:
-        return jsonify({
-            "id":student.student_id,
-            "name":student.name,
-            "department":student.department,
-            "semester":student.semester
-        }),200
+        return jsonify(student.student_to_dict()),200
 
 @app.route("/students/<int:student_id>",methods=["PATCH"])
 def api_update_student_by_semester(student_id):
@@ -76,12 +72,20 @@ def api_update_student_by_semester(student_id):
     else:
         return {"error":"Failed to update student semester"},404
     
+@app.route("/students/<int:student_id>",methods=["DELETE"])
+def api_delete_std_id(student_id):
+    if get_student_by_id(student_id):
+        x=remove_student(student_id)
+        if x:
+            return {"message":"Student deleted"},200
+        return {"error":"Unexpected Error Occured"},400
+    
 #COURSE ROUTE
 from services.course_service import(add_course,
                                     get_all_courses,
                                     get_course_by_id,
                                     remove_course)
-@app.route("/course",methods=["POST"])
+@app.route("/courses",methods=["POST"])
 def api_new_course():
     data=request.get_json()
     if not data["course_name"]:
@@ -92,28 +96,20 @@ def api_new_course():
     if x:
         return {"message":f"Course created with id {x}."},201
 
-@app.route("/course",methods=["GET"])
+@app.route("/courses",methods=["GET"])
 def api_view_all_cou():
     courses=get_all_courses()
     if courses:
-        return jsonify([{
-            "id":course.course_id,
-            "course_name":course.course_name,
-            "credits":course.credits
-        }
+        return jsonify([course.course_to_dict()
         for course in courses])
     
-@app.route("/course/<int:id>",methods=["GET"])
+@app.route("/courses/<int:id>",methods=["GET"])
 def api_get_cou_id(id):
     course=get_course_by_id(id)
     if course:
-        return jsonify({
-            "id":course.course_id,
-            "course_name":course.course_name,
-            "credits":course.credits
-        }),200    
+        return jsonify(course.course_to_dict()),200    
     
-@app.route("/course/<int:id>",methods=["DELETE"])
+@app.route("/courses/<int:id>",methods=["DELETE"])
 def api_del_cou_id(id):
     course=remove_course(id)
     if course:
@@ -121,6 +117,8 @@ def api_del_cou_id(id):
     
     
 #ADMIN ROUTES
+from services.admin_services import (register_admin,
+                                      login_admin)
 
 @app.route("/register",methods=["POST"])
 def api_register():
@@ -152,7 +150,8 @@ def api_login():
 from services.notice_services import(add_notice,
                                      get_all_notice,
                                      get_notice_by_id,
-                                     remove_notice
+                                     remove_notice,
+restore_notice_id
                                      )
 
 from validators import lengthcheck
@@ -173,12 +172,7 @@ def api_add_notice():
 def api_view_all_notice():
     notices=get_all_notice()
     return jsonify([
-        {
-            "id":notice.id,
-            "title":notice.title,
-            "content":notice.content,
-            "created_at":notice.created_at
-        }
+        notice.notice_to_dict()
     for notice in notices
     ])
 
@@ -186,17 +180,19 @@ def api_view_all_notice():
 def api_get_notice_by_id(id):
     notice=get_notice_by_id(id)
     if notice:
-        return jsonify({
-            "id":notice.id,
-            "title":notice.title,
-            "content":notice.content,
-            "created_at":notice.created_at
-        }),200
+        return jsonify(notice.notice_to_dict()),200
 
-@app.route("/notices/<int:notice_id>",methods=["DELETE"])
+@app.route("/notices/<int:notice_id>",methods=["PATCH"])
 def api_del_notice(notice_id):
     if remove_notice(notice_id):
         return {"message":"Notice deleted."},200
+    
+@app.route("/notices/<int:notice_id>/restore",methods=["PATCH"])
+def api_restore_notice(notice_id):
+    if restore_notice_id(notice_id):
+        return{"message":"Notice activated."},200
+
+
     
 #TIMETABLE ROUTES
 
@@ -223,29 +219,19 @@ def api_new_slot():
     
 @app.route("/timetable",methods=["GET"])   
 def api_get_all_slot():
-    slots=get_all_slots_ser()
-    if slots:
-        return jsonify([{
-            "id":slot.id,
-            "course_id":slot.course_id,
-            "day":slot.day,
-            "start_time":slot.start_time,
-            "end_time":slot.end_time,
-            "room":slot.room
-        }for slot in slots]),200
+    day=request.args.get("day",default=None)
+    course_id=request.args.get("course_id",default=None,type=int)
+    room=request.args.get("room",default=None)
+    
+    slots=get_all_slots_ser(course_id,day,room)
+    return jsonify([slot.timetable_to_dict()
+                         for slot in slots]),200
 
 @app.route("/timetable/<int:course_id>/slots",methods=["GET"])
 def api_get_slots_by_cou_id(course_id):
     slots=get_slot(course_id)
     if slots:
-        return jsonify([{
-            "id":slot.id,
-            "course_id":slot.course_id,
-            "day":slot.day,
-            "start_time":slot.start_time,
-            "end_time":slot.end_time,
-            "room":slot.room            
-        }
+        return jsonify([slot.timetable_to_dict()
         for slot in slots]),200
     
 @app.route("/timetable/<int:id>",methods=["DELETE"])
@@ -255,17 +241,12 @@ def api_del_slot(id):
         return {"message":f"{dell} deleted"},200
     
 @app.route("/timetable/day/<day>",methods=["GET"])
-def api_get_slots_by_day(day):
+def api_get_slots_by_day(day):       #1
     slots=get_slots_by_day(day)
     if slots:
-        return jsonify([{
-        "id":slot.id,
-        "course_id":slot.course_id,
-        "day":slot.day,
-        "start_time":slot.start_time,
-        "end_time":slot.end_time,
-        "room":slot.room    
-        }for slot in slots])
+        return jsonify([
+        slot.timetable_to_dict()   
+        for slot in slots])
 
 if __name__ == "__main__":
     app.run(debug=True)

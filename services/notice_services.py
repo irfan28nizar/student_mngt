@@ -2,7 +2,9 @@ from datetime import datetime
 from database import(create_notice,
                      view_all_notices,
                      view_notice_by_id,
-                     delete_notice
+                     delete_notice,
+                     restore_notice,
+                     check_notice
                      )
 from exceptions import(ValidationError,
                        ResourceNotFoundError) 
@@ -15,8 +17,6 @@ def add_notice(title,content):
 
 def get_all_notice():
     notices=view_all_notices()
-    if not notices:
-        raise ResourceNotFoundError("No notices found.")
     return notices
     
 def get_notice_by_id(id):
@@ -30,3 +30,13 @@ def remove_notice(id):
     if not notice:
         raise ResourceNotFoundError("Notice not found.")
     return notice
+
+
+def restore_notice_id(id):
+    info=check_notice(id)
+    if not info:
+        raise ResourceNotFoundError("Notice not found.")
+    if info.is_deleted==0:
+        raise ValidationError("Notice already active.")
+    return restore_notice(id)
+    

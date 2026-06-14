@@ -10,7 +10,9 @@ def checkpass(password):
     if not any(char in "!@#$%^&*()-_=+[]{}|;:,.<>?/" for char in password):
         return False
     return True
+
 def lengthcheck(content):
     if len(content)<25:
         return False
     return True
+

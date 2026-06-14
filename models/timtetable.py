@@ -15,4 +15,14 @@ class Timetable:
                 f"end_time:{self.end_time},"
                 f"room:{self.room}")
     
+    def timetable_to_dict(self):
+        return {
+            "id":self.id,
+        "course_id":self.course_id,
+        "day":self.day,
+        "start_time":self.start_time,
+        "end_time":self.end_time,
+        "room":self.room 
+        }
+    
     

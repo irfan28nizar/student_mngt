@@ -1,15 +1,13 @@
 from database import create_tables
 from services.student_service import (add_student,
                                       delete_student,
-                                      get_all_students,
-                                      get_student_by_department,
-                                      get_students_by_semester,
-                                      update_student,
-                                      get_students_by_department_and_semester
+                                      get_students_filtered,
+                                      update_student
                                       )
 from services.course_service import(add_course,
                                   delete_course,
                                   get_all_courses)
+from models.student import Student
 
 def show_menu_student():
     print("\nStudent Management System")
@@ -17,10 +15,7 @@ def show_menu_student():
     print("2.Update Student")
     print("3.Delete Student")
     print("4.View All Students")
-    print("5.View Students by Department")
-    print("6.Filter students by semester")
-    print("7.Search students by department and semester")
-    print("8.Exit")
+    print("5.Exit")
 
 def show_menu_course():
     print("\nCourse Management System")
@@ -94,65 +89,20 @@ def main():
                         print(f"\nNo student found with ID {student_id}.")
                     else:
                         print(f"\nStudent with ID {student_id} deleted successfully.")
-                    
 
                 elif student_choice=="4":
-                    print("\n View All Students")
-                    students=get_all_students()
-                    if not students:
-                        print("\n No students found.")
-                    else:
-                        for s in students:
-                            print(s)
+                    print("\nView Students Selected")
+                    department=None
+                    semester=None
+                    page=1
+                    page_size=20    
+
+                    students=get_students_filtered(department,semester,page=1,page_size=10)
+                    for student in students:
+                        print(student)
 
 
                 elif student_choice=="5":
-                    print("\nView Students by Department")
-                    department=input("Enter the department name:")
-                    students=get_student_by_department(department)
-                    if not students:
-                        print(f"\nNo students found in department {department}.")
-                    else:
-                        for s in students:
-                            print(s)
-
-
-
-                elif student_choice=="6":
-                    print("\nFilter students by semester")
-                    try:
-                        semester=int(input("Enter the semester:"))
-                    except ValueError:
-                        print("Semester must be an integer.")
-                        continue
-                    students=get_students_by_semester(semester)
-                    if not students:
-                        print(f"\nNo students found in semester {semester}.")
-                    else:
-                        for s in students:
-                            print(s) 
-
-
-
-                elif student_choice=="7":
-                    print("\nSearch Students By Department and Semester")
-                    dept=input("Enter the department name(leave empty to skip):").strip()
-                    sem=input("Enter the semester(leave empty to skip):").strip()
-                    try:
-                        semes=int(sem) if sem else None
-                    except ValueError:
-                        print("Semester must be an integer.")
-                        continue
-                    students=get_students_by_department_and_semester(department=dept if dept else None,semester=semes)
-                    if not students:
-                        print("\nNo students found matching the criteria.")
-                    else:
-                        for s in students:
-                            print(s)
-
-
-
-                elif student_choice=="8":
                     print("\nExiting Student Management Menu. Returning to Main Menu.")
                     break
                 else:
