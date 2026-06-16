@@ -10,7 +10,8 @@ from exceptions import(ValidationError,
 from database import view_course_by_id
 from validators import(is_int,
                        is_valid_data,
-                       check_weekdays)
+                       check_weekdays,
+                       check_time)
 def add_slot(course_id,day,start_time,end_time,room):
     if not is_int(course_id):
         raise ValidationError("Course_id must be integer.")
@@ -24,6 +25,12 @@ def add_slot(course_id,day,start_time,end_time,room):
         raise ValidationError("end time is required.")
     if not is_valid_data(room):
         raise ValidationError("room number is required.")
+    if len(room)>10:
+        raise ValidationError("enter a valid room number.")
+    if not check_time(start_time):
+        raise ValidationError("Time should be in the format 00:00")
+    if not check_time(end_time):
+        raise ValidationError("Time should be in the format 00:00")
     if start_time>=end_time:
         raise ValidationError("Start time should be before end time.")
     if not view_course_by_id(course_id):

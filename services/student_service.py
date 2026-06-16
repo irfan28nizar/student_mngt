@@ -13,6 +13,10 @@ def add_student(name,department,semester):
         raise exceptions.ValidationError("department is required.")
     if not is_int(semester):
         raise exceptions.ValidationError("semester must be integer.")
+    if not len(name)<=100:
+        raise exceptions.ValidationError("Maximum length of name is 100")
+    if not len(department)<=100:
+        raise exceptions.ValidationError("Maximum length of department is 100")
     if semester<1 or semester>8:
         raise exceptions.ValidationError("Semester must be between 1 and 8.")
     return create_student(name,department,semester)

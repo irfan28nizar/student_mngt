@@ -11,6 +11,8 @@ def add_course(course_name,credits):
         raise ValidationError("Course name is required.")
     if not is_int(credits):
         raise ValidationError("credits must be integer")
+    if not len(course_name)<=50:
+        raise ValidationError("Maximum length of course name is 50")
     if not 0<=credits<=4:
         raise ValidationError("Credits must be between 0 and 4.")
     x=view_course_by_name(course_name.strip())

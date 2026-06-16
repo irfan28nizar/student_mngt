@@ -21,6 +21,8 @@ def register_admin(username,password):
         raise exceptions.ValidationError("password cannot be empty.")
     username=username.strip()
     password=password.strip()
+    if not len(username)<=30:
+        raise exceptions.ValidationError("Maximum length of username is 30")
     if not checkpass(password):
         raise exceptions.ValidationError("Password must be at least 8 characters long,"
         " contain a number, an uppercase letter,"
@@ -35,6 +37,7 @@ def login_admin(username,password):
         raise exceptions.ValidationError("username is required.")
     if not is_valid_data(password):
         raise exceptions.ValidationError("password cannot be empty.")
+    
     admin=view_admin_by_username(username)
     if not admin:
         raise exceptions.AuthenticationError("Invalid Credentials.")

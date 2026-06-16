@@ -14,8 +14,10 @@ def add_notice(title,content):
         raise ValidationError("Title is required.")
     if not is_valid_data(content):
         raise ValidationError("Content is required.")
+    if not len(title)<=100:
+        raise ValidationError("Maximum length of title is 100")
     if not lengthcheck(content):
-        raise ValidationError("Content length must be 25 characters.")
+        raise ValidationError("Content length must be atleast 25 characters.")
     created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return create_notice(title,content,created_at)
 

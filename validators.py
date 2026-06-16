@@ -1,5 +1,6 @@
+from datetime import datetime
 def checkpass(password):
-    if len(password)<8:
+    if not 8<len(password)<64:
         return False
     if not any(char.isdigit() for char in password):
         return False
@@ -11,8 +12,14 @@ def checkpass(password):
         return False
     return True
 
+def check_time(tim):
+    try:
+        datetime.strptime(tim,"%H:%M")
+        return True
+    except ValueError as e:
+        return False        
 def lengthcheck(content):
-    if len(content)<25:
+    if  not 25<len(content)<5000:
         return False
     return True
 
