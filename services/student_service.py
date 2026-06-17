@@ -51,9 +51,9 @@ def remove_student(student_id):
     return delete_student(student_id)
 
 def get_students_filtered(department,semester,page,page_size):
-    if page<1:
-        raise exceptions.ValidationError("Number of pages must be minimum 1.")
-    if page_size<1:
-        raise exceptions.ValidationError("Page size must be minimum 1")
+    if not 1<page<1000:
+        raise exceptions.ValidationError("Number of pages must be between 1 and 1000 .")
+    if not 1<page_size<1000:
+        raise exceptions.ValidationError("Page size must be between 1 and 100")
     x=view_students_filtered(department,semester,page,page_size)
     return x
