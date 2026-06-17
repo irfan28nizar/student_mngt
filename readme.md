@@ -1,6 +1,6 @@
-#Campus Utility Backend System
+# Campus Utility Backend System
 
-##Overview
+## Overview
 
 Campus Utility Backend System is a RESTful backend application built using Python, Flask, and SQLite.
 
@@ -16,9 +16,9 @@ The application follows a layered architecture consisting of API Layer, Service 
 
 ⸻
 
-##Features
+## Features
 
-###Student Management
+### Student Management
 
 * Create Student
 * View All Students
@@ -29,7 +29,7 @@ The application follows a layered architecture consisting of API Layer, Service 
 * Semester Filtering
 * Pagination
 
-###Course Management
+### Course Management
 
 * Create Course
 * View All Courses
@@ -38,7 +38,7 @@ The application follows a layered architecture consisting of API Layer, Service 
 * Duplicate Course Detection
 * Credit Validation
 
-###Notice Management
+### Notice Management
 
 * Create Notice
 * View All Notices
@@ -46,7 +46,7 @@ The application follows a layered architecture consisting of API Layer, Service 
 * Soft Delete Notice
 * Restore Deleted Notice
 
-###Timetable Management
+### Timetable Management
 
 * Create Timetable Slot
 * View All Slots
@@ -58,14 +58,14 @@ The application follows a layered architecture consisting of API Layer, Service 
 * Pagination
 * Filtering
 
-###Authentication
+### Authentication
 
 * Admin Registration
 * Password Hashing
 * Login Verification
 * Password Policy Validation
 
-###Security
+### Security
 
 * SQL Injection Prevention
 * Parameterized Queries
@@ -76,8 +76,9 @@ The application follows a layered architecture consisting of API Layer, Service 
 
 ⸻
 
-##Architecture
+## Architecture
 
+``` layers
 Client
 ↓
 API Layer (Flask Routes)
@@ -87,8 +88,9 @@ Service Layer (Business Logic)
 Database Layer (SQLite Queries)
 ↓
 SQLite Database
+```
 
-###API Layer
+### API Layer
 
 Responsible for:
 
@@ -96,7 +98,7 @@ Responsible for:
 * Parsing JSON Data
 * Returning HTTP Responses
 
-###Service Layer
+### Service Layer
 
 Responsible for:
 
@@ -106,7 +108,7 @@ Responsible for:
 * Timetable Conflict Detection
 * Authentication Logic
 
-###Database Layer
+### Database Layer
 
 Responsible for:
 
@@ -117,22 +119,22 @@ Responsible for:
 
 ⸻
 
-##Tech Stack
+## Tech Stack
 
-###Backend
+### Backend
 
 * Python
 * Flask
 
-###Database
+### Database
 
 * SQLite
 
-###API Testing
+### API Testing
 
 * Postman
 
-###Concepts Implemented
+### Concepts Implemented
 
 * REST APIs
 * Layered Architecture
@@ -147,65 +149,71 @@ Responsible for:
 
 ⸻
 
-##API Documentation
+## API Documentation
 
-Student APIs
+### Student APIs
 
-Method	Endpoint	             Description
-GET	    /students	            Get all students
-POST	/students	            Create student
-GET	    /students/<student_id>	Get student by ID
-PATCH	/students/<student_id>	Update student semester
-DELETE	/students/<student_id>	Delete student
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /students | Get all students |
+| POST | /students | Create student |
+| GET | /students/<student_id> | Get student by ID |
+| PATCH | /students/<student_id> | Update student semester |
+| DELETE | /students/<student_id> | Delete student |
 
 Filtering and Pagination:
-
+```http
 GET /students?department=CSE&semester=5&page=1&page_size=10
+```
+⸻
+
+### Course APIs
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /courses | Get all courses |
+| POST | /courses | Create course |
+| GET | /courses/<course_id> | Get course by ID |
+| DELETE | /courses/<course_id> | Delete course |
 
 ⸻
 
-###Course APIs
+### Authentication APIs
 
-Method	    Endpoint
-GET 	    /courses
-POST        /courses
-GET	        /courses/<course_id>
-DELETE	    /courses/<course_id>
-
-⸻
-
-###Authentication APIs
-
-Method	Endpoint
-POST	/register
-POST	/login
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| POST | /register | Register admin |
+| POST | /login | Admin login |
 
 ⸻
 
-###Notice APIs
+### Notice APIs
 
-Method	Endpoint
-GET	    /notices
-POST	/notices
-GET	    /notices/<notice_id>
-PATCH	/notices/<notice_id>
-PATCH	/notices/<notice_id>/restore
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /notices | Get all notices |
+| POST | /notices | Create notice |
+| GET | /notices/<notice_id> | Get notice by ID |
+| PATCH | /notices/<notice_id> | Update notice |
+| PATCH | /notices/<notice_id>/restore | Restore deleted notice |
 
 ⸻
 
-###Timetable APIs
+### Timetable APIs
 
-Method	Endpoint
-GET	    /timetable
-POST	/timetable
-GET	    /timetable/<course_id>/slots
-GET	    /timetable/day/<day>
-DELETE	/timetable/<slot_id>
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /timetable | Get all timetable slots |
+| POST | /timetable | Create timetable slot |
+| GET | /timetable/<course_id>/slots | Get slots by course ID |
+| GET | /timetable/day/<day> | Get slots by day |
+| DELETE | /timetable/<slot_id> | Delete timetable slot |
 
 Filtering and Pagination:
 
+```http
 GET /timetable?course_id=1&day=Monday&room=A101&page=1&page_size=10
-
+```
 ⸻
 
 Timetable Conflict Detection
@@ -214,17 +222,15 @@ The system prevents overlapping timetable slots in the same room.
 
 Conflict Logic:
 
-new_start_time < existing_end_time
-
-AND
-
+```python
+new_start_time < existing_end_time and
 new_end_time > existing_start_time
-
+```
 If the condition evaluates to true, the slot is rejected.
 
 ⸻
 
-##Security Measures
+## Security Measures
 
 * Password Hashing using bcrypt
 * SQL Injection Prevention using Parameterized Queries
@@ -235,7 +241,7 @@ If the condition evaluates to true, the slot is rejected.
 
 ⸻
 
-##Future Improvements
+## Future Improvements
 
 * PostgreSQL Migration
 * JWT Authentication
@@ -245,7 +251,7 @@ If the condition evaluates to true, the slot is rejected.
 
 ⸻
 
-Author
+## Author
 
 Muhammed Irfan Nizarudeen
 
