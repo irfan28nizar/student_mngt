@@ -1,29 +1,70 @@
-notices
--------
-id
-title
-content
-created_at
+Features
 
-db
-create_notice()
+✔ Student Management
+    - Create Student
+    - View Student
+    - Update Student
+    - Filtering
+    - Pagination
 
-get_all_notices()
+✔ Course Management
+    - CRUD Operations
+    - Credit Validation
+    - Duplicate Detection
 
-get_notice_by_id()
+✔ Notice Management
+    - CRUD Operations
+    - Soft Delete
+    - Restore Notice
 
-delete_notice()
+✔ Timetable Management
+    - Slot Management
+    - Conflict Detection
+    - Room Validation
+    - Day Filtering
 
-service
-add_notice()
+✔ Authentication
+    - Admin Registration
+    - Password Hashing
+    - Login Verification
 
-view_all_notices()
+✔ Security
+    - SQL Injection Prevention
+    - Input Validation
+    - Input Sanitization
+    - Defensive Programming
 
-view_notice_by_id()
 
-remove_notice()
+Architecture
 
-POST   /notices
-GET    /notices
-GET    /notices/<id>
-DELETE /notices/<id>
+    Client
+    ↓
+    API Layer (Flask)
+    ↓
+    Service Layer
+    ↓
+    Database Layer
+    ↓
+    SQLite Database
+
+
+TECH STACK
+
+    Backend:
+        - Python
+        - Flask
+
+    Database:
+        - SQLite
+
+    API Testing:
+        - Postman
+
+    Concepts:
+        - REST APIs
+        - Layered Architecture
+        - Authentication
+        - Pagination
+        - Filtering
+        - Soft Delete
+        - Validation
